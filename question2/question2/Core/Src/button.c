@@ -1,0 +1,95 @@
+
+
+#include "button.h"
+// when long press detect
+#define TIME_FOR_LONG_KEY 100
+
+// detect long press key
+#define TIME_FOR_PRESS_KEY 300
+#define NUM_BUTTONS 3
+
+int key0[NUM_BUTTONS] = { SET };
+int key1[NUM_BUTTONS] = { SET };
+int key2[NUM_BUTTONS] = { SET };
+int key3[NUM_BUTTONS] = { SET };
+
+int TimeOutForKeyPress = TIME_FOR_PRESS_KEY;
+int TimeOutForLongKeyPress = TIME_FOR_LONG_KEY;
+
+int button_flag[NUM_BUTTONS] = { RESET };
+int button_flag_1s[NUM_BUTTONS] = { RESET };
+
+int long_button_flag[NUM_BUTTONS] = { RESET };
+
+int is_button_pressed(int index) {
+	if (button_flag[index] == 1) {
+		button_flag[index] = 0;
+		return 1;
+	}
+	return 0;
+}
+
+void subKeyProcess(int index) {
+	//TODO
+	button_flag[index] = 1;
+
+}
+int is_long_button_flag(int index) {
+    if (long_button_flag[index] == 1) {
+        long_button_flag[index] = 0;
+        return 1;
+    }
+    return 0;
+}
+
+void getKeyInput() {
+	for (int i = 0; i < 3; i++) {
+		key2[i] = key1[i];
+		key1[i] = key0[i];
+		switch (i) {
+		case 0:
+			key0[i] = HAL_GPIO_ReadPin(RESET_GPIO_Port, RESET_Pin);
+			break;
+		case 1:
+			key0[i] = HAL_GPIO_ReadPin(INC_GPIO_Port, INC_Pin);
+			break;
+		case 2:
+			key0[i] = HAL_GPIO_ReadPin(DEC_GPIO_Port, DEC_Pin);
+			break;
+		default:
+			break;
+		}
+		if ((key1[i] == key0[i]) && (key1[i] == key2[i])) {
+			if (key2[i] != key3[i]) {
+				key3[i] = key2[i];
+
+				if (key3[i] == PRESSED_STATE) {
+					subKeyProcess(i);
+				}
+			} else {
+				TimeOutForKeyPress--;
+
+				if (TimeOutForKeyPress == 0) {
+					if (key2[i] == PRESSED_STATE) {
+						TimeOutForKeyPress = TIME_FOR_PRESS_KEY;
+						button_flag_1s[i] = 1;
+
+					}
+				}
+				if ((button_flag_1s[i] == 1)) {
+					TimeOutForLongKeyPress--;
+
+					if (TimeOutForLongKeyPress == 0) {
+						long_button_flag[i] = 1;
+						TimeOutForLongKeyPress = TIME_FOR_LONG_KEY;
+					}
+				}
+
+			}
+		} else {
+			button_flag_1s[i] = 0;
+			TimeOutForKeyPress = TIME_FOR_PRESS_KEY;
+		}
+	}
+}
+
